@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Battery, Wifi, Droplets, Thermometer, Wind, MapPin, TrendingUp, Zap, Users, Leaf, Download, AlertTriangle, CheckCircle, Clock, BarChart3, FileText, Globe, Sun, Smartphone, Laptop, Tablet, CreditCard, X } from 'lucide-react';
+import { Battery, Wifi, Droplets, Thermometer, Wind, MapPin, TrendingUp, Zap, Users, Leaf, Download, AlertTriangle, CheckCircle, Clock, BarChart3, FileText, Globe, Sun, Smartphone, Laptop, Tablet, CreditCard, X, Shield, Activity, PieChart, Info, Database, ChevronRight } from 'lucide-react';
 
 // --- Composants UI Internes ---
 
@@ -41,11 +41,13 @@ const AfricanStatCard = ({ icon: Icon, title, value, pattern, colorFrom, colorTo
 );
 
 // Carte capteur
-const AfricanSensorCard = ({ icon: Icon, label, value, color }) => {
+const AfricanSensorCard = ({ icon: Icon, label, value, color, subtext }) => {
   const colorMap = {
     red: 'text-red-600 bg-red-50 border-red-200',
     blue: 'text-blue-600 bg-blue-50 border-blue-200',
     green: 'text-green-600 bg-green-50 border-green-200',
+    orange: 'text-orange-600 bg-orange-50 border-orange-200',
+    purple: 'text-purple-600 bg-purple-50 border-purple-200',
   };
   const theme = colorMap[color] || colorMap.blue;
 
@@ -57,6 +59,7 @@ const AfricanSensorCard = ({ icon: Icon, label, value, color }) => {
       <div>
         <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">{label}</p>
         <p className="text-2xl font-black text-gray-800">{value}</p>
+        {subtext && <p className="text-xs font-medium opacity-70 mt-1">{subtext}</p>}
       </div>
     </div>
   );
@@ -74,10 +77,37 @@ const AfricanFeatureCard = ({ title, description, icon, pattern }) => (
   </div>
 );
 
+// Composant Barre de Progression Stylisée (Nouveau pour Institutions)
+const StatProgressBar = ({ label, value, max, unit, colorClass, status }) => {
+  const percentage = Math.min(100, Math.max(0, (parseFloat(value) / max) * 100));
+  
+  return (
+    <div className="mb-6">
+      <div className="flex justify-between items-end mb-2">
+        <span className="font-bold text-gray-700 text-lg">{label}</span>
+        <div className="flex items-center gap-2">
+            {status && (
+                <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${status === 'Bon' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                    {status === 'Bon' ? <CheckCircle size={12}/> : <AlertTriangle size={12}/>}
+                    {status}
+                </span>
+            )}
+            <span className="font-black text-gray-800 text-xl">{value}{unit}</span>
+        </div>
+      </div>
+      <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
+        <div 
+            className={`h-full rounded-full ${colorClass}`} 
+            style={{ width: `${percentage}%` }}
+        ></div>
+      </div>
+    </div>
+  );
+};
 
-const KaayChargeDemo = () => {
+
+const KaayCharge = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  // Ajout d'un état pour l'appareil sélectionné au lieu de document.getElementById
   const [selectedDevice, setSelectedDevice] = useState(null); 
   
   const [stationData, setStationData] = useState({
@@ -86,7 +116,9 @@ const KaayChargeDemo = () => {
     humidity: 65,
     airQuality: 'Bonne',
     activeUsers: 3,
-    energyProduced: 2.4
+    energyProduced: 2.4,
+    co2Saved: 145,
+    noise: 55
   });
 
   const [chargingSimulation, setChargingSimulation] = useState({
@@ -101,12 +133,13 @@ const KaayChargeDemo = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setStationData(prev => ({
-        battery: Math.min(100, Math.max(0, prev.battery + Math.random() * 2 - 1)), // Légère variation réaliste
+        ...prev,
+        battery: Math.min(100, Math.max(0, prev.battery + Math.random() * 2 - 1)),
         temperature: 26 + Math.random() * 4,
         humidity: 60 + Math.random() * 10,
-        airQuality: prev.airQuality,
-        activeUsers: Math.floor(Math.random() * 5),
-        energyProduced: 2 + Math.random() * 1
+        activeUsers: Math.floor(Math.random() * 8),
+        energyProduced: prev.energyProduced + 0.01,
+        noise: 50 + Math.random() * 20
       }));
     }, 3000);
     return () => clearInterval(interval);
@@ -117,7 +150,7 @@ const KaayChargeDemo = () => {
       const interval = setInterval(() => {
         setChargingSimulation(prev => {
           const newProgress = Math.min(100, prev.progress + 1);
-          const newTimeRemaining = Math.max(0, prev.timeRemaining - (prev.device.time / 100)); // Simulation du temps
+          const newTimeRemaining = Math.max(0, prev.timeRemaining - (prev.device.time / 100)); 
           
           if (newProgress >= 100) {
             return { ...prev, progress: 100, timeRemaining: 0 };
@@ -144,24 +177,17 @@ const KaayChargeDemo = () => {
   ];
 
   const stations = [
-    { id: 1, name: 'Plateau Centre', lat: 14.6928, lng: -17.4467, status: 'active', users: 2, zone: 'Centre-ville', temp: 29.2, humidity: 68, airQuality: 48, pm25: 23, noise: 65 },
-    { id: 2, name: 'Almadies', lat: 14.7392, lng: -17.5089, status: 'active', users: 1, zone: 'Résidentiel', temp: 27.8, humidity: 72, airQuality: 42, pm25: 18, noise: 52 },
-    { id: 3, name: 'Parcelles Assainies', lat: 14.7644, lng: -17.4518, status: 'active', users: 0, zone: 'Populaire', temp: 30.1, humidity: 65, airQuality: 55, pm25: 31, noise: 72 },
-    { id: 4, name: 'Ouakam', lat: 14.7247, lng: -17.4921, status: 'maintenance', users: 0, zone: 'Côtier', temp: 26.5, humidity: 78, airQuality: 38, pm25: 15, noise: 48 }
+    { id: 1, name: 'Plateau Centre', lat: 14.6928, lng: -17.4467, status: 'active', users: 2, zone: 'Centre-ville', temp: 29.2, humidity: 68, airQuality: 48, pm25: 23, noise: 65, revenue: 15000 },
+    { id: 2, name: 'Almadies', lat: 14.7392, lng: -17.5089, status: 'active', users: 1, zone: 'Résidentiel', temp: 27.8, humidity: 72, airQuality: 42, pm25: 18, noise: 52, revenue: 22500 },
+    { id: 3, name: 'Parcelles Assainies', lat: 14.7644, lng: -17.4518, status: 'active', users: 5, zone: 'Populaire', temp: 30.1, humidity: 65, airQuality: 55, pm25: 31, noise: 72, revenue: 8400 },
+    { id: 4, name: 'Ouakam', lat: 14.7247, lng: -17.4921, status: 'maintenance', users: 0, zone: 'Côtier', temp: 26.5, humidity: 78, airQuality: 38, pm25: 15, noise: 48, revenue: 0 }
   ];
 
-  const environmentalData = {
-    temperature: {
-      average: 28.4, min: 26.5, max: 30.1, trend: '+0.8°C', status: 'normal',
-      zones: [
-        { name: 'Plateau Centre', value: 29.2, alert: false },
-        { name: 'Almadies', value: 27.8, alert: false },
-        { name: 'Parcelles Assainies', value: 30.1, alert: true },
-        { name: 'Ouakam', value: 26.5, alert: false }
-      ]
-    },
-    // ... autres données utilisées dans les graphiques si besoin
-  };
+  const alerts = [
+    { id: 1, type: 'critical', title: 'Température élevée', location: 'Parcelles Assainies', value: '30.1°C', time: 'Il y a 15 min' },
+    { id: 2, type: 'warning', title: "Qualité de l'air modérée", location: 'Plateau Centre', value: 'PM2.5: 23 µg/m³', time: 'Il y a 45 min' },
+    { id: 3, type: 'warning', title: 'Niveau sonore élevé', location: 'Parcelles Assainies', value: '72 dB', time: 'Il y a 1h' },
+  ];
 
   const startCharging = (deviceId, paymentMethodId) => {
     if(!deviceId) {
@@ -502,16 +528,249 @@ const KaayChargeDemo = () => {
           </div>
         )}
 
-        {/* TAB: OTHERS (Placeholder) */}
-        {['analytics', 'institutional', 'impact'].includes(activeTab) && (
-            <div className="flex flex-col items-center justify-center py-20 bg-white/50 rounded-3xl border-4 border-dashed border-gray-300">
-                <div className="text-gray-300 mb-4">
-                    {activeTab === 'analytics' && <BarChart3 size={80} />}
-                    {activeTab === 'institutional' && <Globe size={80} />}
-                    {activeTab === 'impact' && <Leaf size={80} />}
+        {/* TAB: ANALYTICS / ENVIRONMENT */}
+        {activeTab === 'analytics' && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+                <div className="bg-white rounded-3xl shadow-2xl p-8 border-8 border-green-200">
+                     <h2 className="text-3xl font-black text-gray-800 mb-6 flex items-center">
+                        <div className="w-3 h-12 bg-gradient-to-b from-green-600 to-teal-500 mr-4 rounded-full"></div>
+                        Analyse Environnementale
+                     </h2>
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="col-span-1 md:col-span-2 space-y-4">
+                           <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
+                              <h3 className="flex items-center gap-2 font-bold text-green-800 mb-4">
+                                <Activity size={20} /> Qualité de l'air (Temps Réel)
+                              </h3>
+                              <div className="h-40 flex items-end justify-between gap-2">
+                                 {[45, 60, 35, 80, 55, 40, 30].map((h, i) => (
+                                    <div key={i} className="w-full bg-green-200 rounded-t-lg relative group">
+                                       <div style={{height: `${h}%`}} className={`absolute bottom-0 w-full rounded-t-lg transition-all ${h > 60 ? 'bg-orange-400' : 'bg-green-500'}`}></div>
+                                       <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs py-1 px-2 rounded">{h} AQI</div>
+                                    </div>
+                                 ))}
+                              </div>
+                              <div className="flex justify-between mt-2 text-xs text-gray-500 font-medium">
+                                 <span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>
+                              </div>
+                           </div>
+                        </div>
+                        <div className="space-y-4">
+                            <AfricanSensorCard icon={Wind} label="Niveau Sonore" value={`${Math.round(stationData.noise)} dB`} subtext="Zone Calme" color="purple" />
+                            <AfricanSensorCard icon={Sun} label="UV Index" value="8" subtext="Élevé - Protection requise" color="orange" />
+                        </div>
+                     </div>
                 </div>
-                <h3 className="text-2xl font-black text-gray-400">Module en cours de développement</h3>
-                <p className="text-gray-500 mt-2">Cette section sera bientôt disponible pour la démo.</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div className="bg-white rounded-2xl p-6 shadow-lg border-l-8 border-blue-500">
+                      <h3 className="font-bold text-gray-800 mb-2 flex items-center gap-2"><Droplets size={20} className="text-blue-500"/> Précipitations</h3>
+                      <p className="text-gray-600">Aucune pluie prévue pour les prochaines 48h. Humidité stable favorable au maintien des équipements.</p>
+                   </div>
+                   <div className="bg-white rounded-2xl p-6 shadow-lg border-l-8 border-yellow-500">
+                      <h3 className="font-bold text-gray-800 mb-2 flex items-center gap-2"><Sun size={20} className="text-yellow-500"/> Ensoleillement</h3>
+                      <p className="text-gray-600">Production solaire optimale. 9.8 heures d'ensoleillement direct enregistrées aujourd'hui à Dakar.</p>
+                   </div>
+                </div>
+            </div>
+        )}
+
+        {/* TAB: INSTITUTIONAL */}
+        {activeTab === 'institutional' && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+                 {/* 1. Header Card */}
+                 <div className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white rounded-3xl shadow-2xl p-8 relative overflow-hidden flex flex-col justify-center h-48">
+                    <div className="absolute right-8 top-1/2 -translate-y-1/2 opacity-30"><Globe size={120} /></div>
+                    <div className="relative z-10">
+                        <h2 className="text-4xl font-black mb-2">Portail Institutionnel</h2>
+                        <p className="text-white/90 text-xl font-medium">Données environnementales pour les décideurs</p>
+                    </div>
+                 </div>
+
+                 {/* 2. Top Stats Grid */}
+                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-white p-4 rounded-2xl shadow-md border-2 border-orange-100">
+                        <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center text-white mb-2 shadow-lg">
+                            <Thermometer size={20} />
+                        </div>
+                        <p className="text-sm font-bold text-gray-500 mb-1">Température Moyenne</p>
+                        <p className="text-3xl font-black text-gray-800">28.4°C</p>
+                    </div>
+                    <div className="bg-white p-4 rounded-2xl shadow-md border-2 border-green-100">
+                         <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-white mb-2 shadow-lg">
+                            <Wind size={20} />
+                        </div>
+                        <p className="text-sm font-bold text-gray-500 mb-1">Qualité de l'Air</p>
+                        <p className="text-3xl font-black text-gray-800">Bon</p>
+                    </div>
+                    <div className="bg-white p-4 rounded-2xl shadow-md border-2 border-blue-100">
+                         <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center text-white mb-2 shadow-lg">
+                            <Droplets size={20} />
+                        </div>
+                        <p className="text-sm font-bold text-gray-500 mb-1">Humidité Moyenne</p>
+                        <p className="text-3xl font-black text-gray-800">70.8%</p>
+                    </div>
+                    <div className="bg-white p-4 rounded-2xl shadow-md border-2 border-purple-100">
+                         <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center text-white mb-2 shadow-lg">
+                            <BarChart3 size={20} />
+                        </div>
+                        <p className="text-sm font-bold text-gray-500 mb-1">Niveau Sonore</p>
+                        <p className="text-3xl font-black text-gray-800">59.3 dB</p>
+                    </div>
+                 </div>
+
+                 {/* 3. Detailed Metrics Section */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Temperature Panel */}
+                    <div className="bg-orange-50 rounded-3xl p-6 border-4 border-orange-100 shadow-lg">
+                        <div className="flex items-center gap-3 mb-6">
+                             <Thermometer className="text-red-500" size={28}/>
+                             <h3 className="text-2xl font-black text-gray-800">Température par Zone</h3>
+                        </div>
+                        {stations.map(station => (
+                            <StatProgressBar 
+                                key={station.id}
+                                label={station.name}
+                                value={station.temp}
+                                max={50}
+                                unit="°C"
+                                colorClass="bg-gradient-to-r from-blue-400 via-purple-400 to-red-500"
+                            />
+                        ))}
+                    </div>
+
+                    {/* Air Quality Panel */}
+                    <div className="bg-green-50 rounded-3xl p-6 border-4 border-green-100 shadow-lg">
+                        <div className="flex items-center gap-3 mb-6">
+                             <Wind className="text-green-600" size={28}/>
+                             <h3 className="text-2xl font-black text-gray-800">Qualité de l'Air par Zone</h3>
+                        </div>
+                        {stations.map(station => (
+                            <StatProgressBar 
+                                key={station.id}
+                                label={station.name}
+                                value={station.airQuality} // Assuming lower is better for simplified view or matching mocked data
+                                max={100} // AQI max
+                                unit=""
+                                status={station.airQuality < 50 ? 'Bon' : 'Modéré'}
+                                colorClass={station.airQuality < 50 ? "bg-green-500" : "bg-orange-500"}
+                            />
+                        ))}
+                    </div>
+                 </div>
+
+                 {/* 4. Alerts Panel */}
+                 <div className="bg-orange-50 rounded-3xl p-8 border-4 border-orange-200 shadow-lg relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4">
+                        <span className="bg-orange-200 text-orange-800 px-4 py-2 rounded-full font-bold shadow-sm">
+                            {alerts.length} alertes
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-3 mb-6">
+                         <div className="w-2 h-8 bg-orange-600 rounded-full"></div>
+                         <h3 className="text-2xl font-black text-gray-800">Alertes Actives</h3>
+                    </div>
+                    <div className="space-y-4">
+                        {alerts.map(alert => (
+                            <div key={alert.id} className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-orange-500 flex justify-between items-start">
+                                <div>
+                                    <h4 className="font-bold text-lg text-gray-800">{alert.title}</h4>
+                                    <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                                        <MapPin size={14} className="text-pink-500"/>
+                                        <span className="font-semibold text-gray-700">{alert.location}</span>
+                                    </div>
+                                    <div className="mt-2 font-black text-gray-800 text-lg">{alert.value}</div>
+                                </div>
+                                <span className="text-xs font-bold text-gray-400">{alert.time}</span>
+                            </div>
+                        ))}
+                    </div>
+                 </div>
+
+                 {/* 5. API & Reports Section */}
+                 <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-3xl p-8 shadow-2xl text-white relative overflow-hidden border-4 border-yellow-400">
+                    <div className="flex items-center gap-3 mb-8 relative z-10">
+                         <div className="bg-white/20 p-2 rounded-lg"><Database size={24}/></div>
+                         <h3 className="text-2xl font-black">API Ouverte & Rapports</h3>
+                    </div>
+
+                    <div className="bg-white/10 rounded-xl p-6 backdrop-blur-md border border-white/20 mb-8 relative z-10">
+                        <h4 className="font-bold mb-4 opacity-90">Accès API</h4>
+                        <div className="bg-black/30 rounded-lg p-4 font-mono text-sm text-pink-200 mb-4 flex items-center gap-2">
+                            <span className="text-white font-bold">GET</span> /api/v1/environmental-data
+                        </div>
+                        <button className="bg-white text-purple-700 font-bold px-6 py-3 rounded-xl hover:bg-gray-100 transition-colors shadow-lg">
+                            Documentation
+                        </button>
+                    </div>
+
+                    <div className="space-y-3 relative z-10">
+                        <button className="w-full bg-white/10 hover:bg-white/20 border border-white/30 rounded-xl p-4 flex items-center justify-between transition-all group">
+                             <div className="flex items-center gap-3">
+                                 <FileText size={20}/>
+                                 <span className="font-bold">Rapport Hebdomadaire</span>
+                             </div>
+                             <ChevronRight className="opacity-50 group-hover:translate-x-1 transition-transform"/>
+                        </button>
+                        <button className="w-full bg-white/10 hover:bg-white/20 border border-white/30 rounded-xl p-4 flex items-center justify-between transition-all group">
+                             <div className="flex items-center gap-3">
+                                 <BarChart3 size={20}/>
+                                 <span className="font-bold">Analyse Mensuelle</span>
+                             </div>
+                             <ChevronRight className="opacity-50 group-hover:translate-x-1 transition-transform"/>
+                        </button>
+                        <button className="w-full bg-white/10 hover:bg-white/20 border border-white/30 rounded-xl p-4 flex items-center justify-between transition-all group">
+                             <div className="flex items-center gap-3">
+                                 <AlertTriangle size={20}/>
+                                 <span className="font-bold">Alertes Environnementales</span>
+                             </div>
+                             <ChevronRight className="opacity-50 group-hover:translate-x-1 transition-transform"/>
+                        </button>
+                    </div>
+                 </div>
+                 
+                 {/* Footer Style */}
+                 <div className="mt-12 bg-blue-900 rounded-t-3xl p-8 text-center text-white relative overflow-hidden -mx-6 -mb-8 pb-12">
+                     <div className="flex items-center justify-center gap-2 mb-2">
+                        <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center text-blue-900">
+                             <Globe size={16}/>
+                        </div>
+                        <span className="font-black text-xl text-orange-400">KaayChargé</span>
+                     </div>
+                     <p className="text-blue-300 font-bold text-sm uppercase tracking-wider mb-4">Infrastructure du Futur</p>
+                     <p className="text-white/80 font-medium text-sm">Une solution numérique au service des citoyens et de l'État</p>
+                     <div className="mt-4 text-xs text-blue-400 font-mono">Made in Senegal SN with ❤️ • © 2024</div>
+                 </div>
+
+            </div>
+        )}
+
+        {/* TAB: IMPACT */}
+        {activeTab === 'impact' && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+               <div className="text-center mb-8">
+                  <h2 className="text-4xl font-black text-green-800 mb-2">Notre Impact Écologique</h2>
+                  <p className="text-xl text-green-600">Contribuer à un Sénégal plus vert, une charge à la fois.</p>
+               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <AfricanStatCard icon={Leaf} title="CO2 Évité" value={`${stationData.co2Saved} kg`} pattern="leaves" colorFrom="from-green-600" colorTo="to-green-800" />
+                  <AfricanStatCard icon={Sun} title="Énergie Propre" value="1.2 MWh" pattern="sun" colorFrom="from-yellow-500" colorTo="to-orange-600" />
+                  <AfricanStatCard icon={Users} title="Citoyens Connectés" value="1,240" pattern="triangles" colorFrom="from-blue-600" colorTo="to-indigo-700" />
+               </div>
+
+               <div className="bg-green-900 rounded-3xl p-10 text-white relative overflow-hidden shadow-2xl">
+                   <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+                       <div className="bg-white/10 p-6 rounded-full backdrop-blur-md border-4 border-white/20">
+                          <Leaf size={64} className="text-green-300" />
+                       </div>
+                       <div>
+                          <h3 className="text-3xl font-bold mb-2">Équivalent Arbres Plantés</h3>
+                          <div className="text-6xl font-black text-green-300 mb-2">124</div>
+                          <p className="text-green-100 text-lg">Grâce à l'utilisation de l'énergie solaire pour recharger vos appareils, vous avez contribué à réduire l'empreinte carbone équivalente à la plantation d'une petite forêt urbaine.</p>
+                       </div>
+                   </div>
+               </div>
             </div>
         )}
 
@@ -520,4 +779,4 @@ const KaayChargeDemo = () => {
   );
 };
 
-export default KaayChargeDemo;
+export default KaayCharge;
