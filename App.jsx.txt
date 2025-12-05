@@ -1,0 +1,386 @@
+import React, { useState, useEffect } from 'react';
+import { Battery, Wifi, Droplets, Thermometer, Wind, MapPin, TrendingUp, Zap, Users, Leaf, Download, AlertTriangle, CheckCircle, Clock, BarChart3, FileText, Globe, Sun } from 'lucide-react';
+
+const KaayChargeDemo = () => {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [stationData, setStationData] = useState({
+    battery: 87,
+    temperature: 28,
+    humidity: 65,
+    airQuality: 'Bonne',
+    activeUsers: 3,
+    energyProduced: 2.4
+  });
+
+  const [chargingSimulation, setChargingSimulation] = useState({
+    isActive: false,
+    device: null,
+    paymentMethod: null,
+    progress: 0,
+    timeRemaining: 0,
+    cost: 0
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setStationData(prev => ({
+        battery: Math.min(100, prev.battery + Math.random() * 2 - 0.5),
+        temperature: 26 + Math.random() * 4,
+        humidity: 60 + Math.random() * 10,
+        airQuality: prev.airQuality,
+        activeUsers: Math.floor(Math.random() * 5),
+        energyProduced: 2 + Math.random() * 1
+      }));
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (chargingSimulation.isActive && chargingSimulation.progress < 100) {
+      const interval = setInterval(() => {
+        setChargingSimulation(prev => {
+          const newProgress = Math.min(100, prev.progress + 1);
+          const newTimeRemaining = Math.max(0, prev.timeRemaining - 1);
+          
+          if (newProgress >= 100) {
+            return { ...prev, progress: 100, timeRemaining: 0, isActive: false };
+          }
+          
+          return { ...prev, progress: newProgress, timeRemaining: newTimeRemaining };
+        });
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, [chargingSimulation.isActive, chargingSimulation.progress]);
+
+  const devices = [
+    { id: 'smartphone', name: 'Smartphone', icon: '📱', price: 100, time: 30, power: '5W', description: 'Recharge rapide USB' },
+    { id: 'tablet', name: 'Tablette', icon: '📱', price: 150, time: 45, power: '10W', description: 'Recharge standard' },
+    { id: 'laptop', name: 'Ordinateur Portable', icon: '💻', price: 300, time: 90, power: '45W', description: 'Recharge USB-C rapide' },
+    { id: 'powerbank', name: 'Power Bank', icon: '🔋', price: 200, time: 60, power: '18W', description: 'Recharge complète' }
+  ];
+
+  const paymentMethods = [
+    { id: 'wave', name: 'Wave', icon: '🌊', color: 'from-blue-600 to-cyan-500', description: 'Paiement mobile instantané' },
+    { id: 'orange', name: 'Orange Money', icon: '🟠', color: 'from-orange-600 to-amber-500', description: 'Transfert d\'argent mobile' },
+    { id: 'coins', name: 'Pièces', icon: '💰', color: 'from-yellow-600 to-orange-600', description: 'Monnaie locale acceptée' }
+  ];
+
+  const stations = [
+    { id: 1, name: 'Plateau Centre', lat: 14.6928, lng: -17.4467, status: 'active', users: 2, zone: 'Centre-ville', temp: 29.2, humidity: 68, airQuality: 48, pm25: 23, noise: 65 },
+    { id: 2, name: 'Almadies', lat: 14.7392, lng: -17.5089, status: 'active', users: 1, zone: 'Résidentiel', temp: 27.8, humidity: 72, airQuality: 42, pm25: 18, noise: 52 },
+    { id: 3, name: 'Parcelles Assainies', lat: 14.7644, lng: -17.4518, status: 'active', users: 0, zone: 'Populaire', temp: 30.1, humidity: 65, airQuality: 55, pm25: 31, noise: 72 },
+    { id: 4, name: 'Ouakam', lat: 14.7247, lng: -17.4921, status: 'maintenance', users: 0, zone: 'Côtier', temp: 26.5, humidity: 78, airQuality: 38, pm25: 15, noise: 48 }
+  ];
+
+  const environmentalData = {
+    temperature: {
+      average: 28.4, min: 26.5, max: 30.1, trend: '+0.8°C', status: 'normal',
+      zones: [
+        { name: 'Plateau Centre', value: 29.2, alert: false },
+        { name: 'Almadies', value: 27.8, alert: false },
+        { name: 'Parcelles Assainies', value: 30.1, alert: true },
+        { name: 'Ouakam', value: 26.5, alert: false }
+      ]
+    },
+    airQuality: {
+      average: 45.8, rating: 'Bon', pm25Average: 21.8, status: 'good',
+      zones: [
+        { name: 'Plateau Centre', value: 48, pm25: 23, status: 'moderate' },
+        { name: 'Almadies', value: 42, pm25: 18, status: 'good' },
+        { name: 'Parcelles Assainies', value: 55, pm25: 31, status: 'moderate' },
+        { name: 'Ouakam', value: 38, pm25: 15, status: 'good' }
+      ]
+    },
+    humidity: {
+      average: 70.8, min: 65, max: 78, status: 'normal',
+      zones: [
+        { name: 'Plateau Centre', value: 68 },
+        { name: 'Almadies', value: 72 },
+        { name: 'Parcelles Assainies', value: 65 },
+        { name: 'Ouakam', value: 78 }
+      ]
+    },
+    noise: {
+      average: 59.3, status: 'acceptable',
+      zones: [
+        { name: 'Plateau Centre', value: 65, status: 'moderate' },
+        { name: 'Almadies', value: 52, status: 'good' },
+        { name: 'Parcelles Assainies', value: 72, status: 'high' },
+        { name: 'Ouakam', value: 48, status: 'good' }
+      ]
+    }
+  };
+
+  const alerts = [
+    { id: 1, type: 'warning', title: 'Température élevée', location: 'Parcelles Assainies', value: '30.1°C', time: 'Il y a 15 min', priority: 'medium' },
+    { id: 2, type: 'info', title: 'Qualité de l\'air modérée', location: 'Plateau Centre', value: 'PM2.5: 23 µg/m³', time: 'Il y a 45 min', priority: 'low' },
+    { id: 3, type: 'warning', title: 'Niveau sonore élevé', location: 'Parcelles Assainies', value: '72 dB', time: 'Il y a 1h', priority: 'medium' }
+  ];
+
+  const startCharging = (device, paymentMethod) => {
+    const selectedDevice = devices.find(d => d.id === device);
+    setChargingSimulation({
+      isActive: true,
+      device: selectedDevice,
+      paymentMethod: paymentMethods.find(p => p.id === paymentMethod),
+      progress: 0,
+      timeRemaining: selectedDevice.time,
+      cost: selectedDevice.price
+    });
+  };
+
+  const cancelCharging = () => {
+    setChargingSimulation({
+      isActive: false, device: null, paymentMethod: null, progress: 0, timeRemaining: 0, cost: 0
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-amber-50 to-orange-50 relative overflow-hidden">
+      <div className="fixed inset-0 opacity-5 pointer-events-none">
+        <div className="absolute top-10 left-10 text-8xl text-blue-900">◆</div>
+        <div className="absolute top-40 right-20 text-9xl text-orange-600">☀</div>
+        <div className="absolute bottom-20 left-40 text-7xl text-blue-800">●</div>
+        <div className="absolute bottom-40 right-10 text-8xl text-orange-500">◆</div>
+        <div className="absolute top-1/2 left-1/4 text-6xl text-blue-700">⚡</div>
+        <div className="absolute top-1/3 right-1/3 text-9xl text-amber-600">◆</div>
+        <div className="absolute bottom-0 left-0 right-0 h-32">
+          <svg className="w-full h-full" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M0,60 Q300,20 600,60 T1200,60 L1200,120 L0,120 Z" fill="currentColor" className="text-blue-200 opacity-20"/>
+            <path d="M0,80 Q300,40 600,80 T1200,80 L1200,120 L0,120 Z" fill="currentColor" className="text-blue-300 opacity-20"/>
+          </svg>
+        </div>
+      </div>
+
+      <header className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 shadow-2xl border-b-8 border-orange-500 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <svg className="w-full h-full">
+            <pattern id="pattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+              <rect x="20" y="20" width="25" height="25" fill="none" stroke="currentColor" strokeWidth="2" transform="rotate(45 32.5 32.5)"/>
+              <rect x="60" y="60" width="25" height="25" fill="none" stroke="currentColor" strokeWidth="2" transform="rotate(45 72.5 72.5)"/>
+              <path d="M 10 50 L 20 50 M 15 45 L 15 55" stroke="currentColor" strokeWidth="2"/>
+              <path d="M 80 20 L 90 20 M 85 15 L 85 25" stroke="currentColor" strokeWidth="2"/>
+            </pattern>
+            <rect width="100%" height="100%" fill="url(#pattern)"/>
+          </svg>
+        </div>
+        <div className="max-w-7xl mx-auto px-6 py-6 relative z-10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-full bg-amber-100 border-4 border-orange-400 shadow-2xl overflow-hidden flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-brown-600">
+                      <div className="w-12 h-2 bg-amber-800 mx-auto rounded-full mb-1"></div>
+                      <div className="w-2 h-4 bg-amber-900 mx-auto"></div>
+                      <div className="flex justify-center items-center space-x-1 -mt-1">
+                        <div className="text-xs">📱</div>
+                        <div className="text-xs">📱</div>
+                      </div>
+                    </div>
+                    <div className="absolute top-1 right-1/2 transform translate-x-1/2">
+                      <div className="w-8 h-6 bg-blue-900 border-2 border-orange-400 rounded-sm" style={{
+                        background: 'linear-gradient(135deg, #1e3a8a 25%, #3b82f6 25%, #3b82f6 50%, #1e3a8a 50%, #1e3a8a 75%, #3b82f6 75%)',
+                        backgroundSize: '4px 4px'
+                      }}></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="absolute -top-2 -right-2 text-orange-400 text-xl">☀</div>
+                <div className="absolute -bottom-2 -left-2 text-orange-400 text-xl">☀</div>
+              </div>
+              <div>
+                <h1 className="text-4xl font-black text-white drop-shadow-lg" style={{fontFamily: 'system-ui'}}>
+                  <span className="text-orange-400">Kaay</span>Chargé
+                </h1>
+                <p className="text-base text-blue-200 font-semibold">Borne solaire autonome & Capteurs environnementaux</p>
+                <p className="text-sm text-orange-300 font-bold">🇸🇳 Une solution au service des citoyens et de l'État</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3 bg-orange-400 px-6 py-3 rounded-full border-4 border-orange-300 shadow-lg">
+              <div className="w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-base font-black text-blue-900">Système Actif</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="h-3 bg-gradient-to-r from-orange-400 via-blue-500 to-orange-400"></div>
+      </header>
+
+      <div className="bg-white shadow-xl border-b-4 border-blue-800">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex space-x-2 overflow-x-auto">
+            {[
+              { id: 'overview', label: 'Accueil', icon: Sun },
+              { id: 'charging', label: 'Recharge', icon: Battery },
+              { id: 'stations', label: 'Stations', icon: MapPin },
+              { id: 'analytics', label: 'Environnement', icon: Wind },
+              { id: 'institutional', label: 'Institutions', icon: Users },
+              { id: 'impact', label: 'Impact', icon: Leaf }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center space-x-2 px-6 py-4 font-bold transition-all border-b-4 ${
+                  activeTab === tab.id
+                    ? 'text-blue-900 border-orange-500 bg-gradient-to-t from-orange-100 to-transparent'
+                    : 'text-gray-700 border-transparent hover:text-blue-800 hover:bg-blue-50'
+                }`}
+              >
+                <tab.icon className="w-5 h-5" />
+                <span className="whitespace-nowrap">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <main className="max-w-7xl mx-auto px-6 py-8 relative z-10">
+        {activeTab === 'overview' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <AfricanStatCard
+                icon={Battery}
+                title="Batterie Moyenne"
+                value={`${Math.round(stationData.battery)}%`}
+                pattern="circles"
+                colorFrom="from-green-600"
+                colorTo="to-emerald-700"
+                trend="+2%"
+              />
+              <AfricanStatCard
+                icon={Users}
+                title="Utilisateurs Actifs"
+                value={stationData.activeUsers}
+                pattern="triangles"
+                colorFrom="from-blue-600"
+                colorTo="to-cyan-700"
+                trend="+12%"
+              />
+              <AfricanStatCard
+                icon={Zap}
+                title="Énergie Produite"
+                value={`${stationData.energyProduced.toFixed(1)} kWh`}
+                pattern="diamonds"
+                colorFrom="from-yellow-600"
+                colorTo="to-orange-700"
+                trend="+8%"
+              />
+              <AfricanStatCard
+                icon={MapPin}
+                title="Stations Actives"
+                value="4"
+                pattern="waves"
+                colorFrom="from-red-600"
+                colorTo="to-pink-700"
+                trend="100%"
+              />
+            </div>
+
+            <div className="bg-white rounded-3xl shadow-2xl p-8 border-8 border-orange-200 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400 opacity-10 rounded-full -mr-16 -mt-16"></div>
+              <div className="absolute bottom-0 left-0 w-40 h-40 bg-orange-400 opacity-10 rounded-full -ml-20 -mb-20"></div>
+              
+              <h2 className="text-3xl font-black text-gray-800 mb-6 flex items-center relative z-10">
+                <div className="w-3 h-12 bg-gradient-to-b from-yellow-500 via-orange-500 to-red-500 mr-4 rounded-full"></div>
+                Monitoring en Temps Réel - Plateau Centre
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+                <AfricanSensorCard
+                  icon={Thermometer}
+                  label="Température"
+                  value={`${stationData.temperature.toFixed(1)}°C`}
+                  color="red"
+                />
+                <AfricanSensorCard
+                  icon={Droplets}
+                  label="Humidité"
+                  value={`${Math.round(stationData.humidity)}%`}
+                  color="blue"
+                />
+                <AfricanSensorCard
+                  icon={Wind}
+                  label="Qualité de l'Air"
+                  value={stationData.airQuality}
+                  color="green"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <AfricanFeatureCard
+                title="100% Autonome"
+                description="Fonctionnement entièrement solaire sans dépendance au réseau électrique"
+                icon="☀️"
+                pattern="sun"
+              />
+              <AfricanFeatureCard
+                title="Données en Temps Réel"
+                description="Capteurs environnementaux de pointe pour une surveillance continue"
+                icon="📊"
+                pattern="bars"
+              />
+              <AfricanFeatureCard
+                title="Recharge Multi-Appareils"
+                description="Ports USB standards et recharge rapide pour tous vos appareils"
+                icon="🔌"
+                pattern="zigzag"
+              />
+              <AfricanFeatureCard
+                title="Paiement Flexible"
+                description="Accepte pièces de monnaie et mobile money pour une accessibilité maximale"
+                icon="💳"
+                pattern="dots"
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'charging' && (
+          <div className="space-y-6">
+            {!chargingSimulation.isActive ? (
+              <>
+                <div className="bg-white rounded-3xl shadow-2xl p-8 border-8 border-orange-200">
+                  <h2 className="text-3xl font-black text-gray-800 mb-6 flex items-center">
+                    <div className="w-3 h-12 bg-gradient-to-b from-green-500 to-emerald-700 mr-4 rounded-full"></div>
+                    Choisissez votre appareil
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {devices.map(device => (
+                      <div
+                        key={device.id}
+                        className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl p-6 border-4 border-orange-300 hover:border-orange-500 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden"
+                        onClick={() => {
+                          document.getElementById('device-selected').value = device.id;
+                        }}
+                      >
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-yellow-400 opacity-20 rounded-full -mr-10 -mt-10"></div>
+                        <div className="text-6xl mb-4 text-center relative z-10">{device.icon}</div>
+                        <h3 className="text-xl font-black text-gray-800 text-center mb-2">{device.name}</h3>
+                        <p className="text-sm text-gray-600 text-center mb-4">{device.description}</p>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center bg-white rounded-lg p-2">
+                            <span className="text-sm text-gray-600 font-bold">Prix:</span>
+                            <span className="font-black text-orange-600">{device.price} FCFA</span>
+                          </div>
+                          <div className="flex justify-between items-center bg-white rounded-lg p-2">
+                            <span className="text-sm text-gray-600 font-bold">Durée:</span>
+                            <span className="font-black text-gray-700">{device.time} min</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-3xl shadow-2xl p-8 border-8 border-orange-200">
+                  <h2 className="text-3xl font-black text-gray-800 mb-6 flex items-center">
+                    <div className="w-3 h-12 bg-gradient-to-b from-blue-500 to-cyan-700 mr-4 rounded-full"></div>
+                    Mode de paiement
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    {paymentMethods.map(method => (
+                      <div
+                        key={method.id}
+                        className={`bg-gradient-to-br ${method.color} rounded-2xl p-8 text-white cursor-
